@@ -157,6 +157,13 @@ export function WalletDashboard({
     
     setIsRefreshingData(true);
     
+    // Reset all data immediately to clear cache
+    setBalance(null);
+    setNonce(0);
+    setTransactions([]);
+    setIsLoadingBalance(true);
+    setIsLoadingTransactions(true);
+    
     try {
       // Fetch balance and nonce
       const balanceData = await fetchBalance(wallet.address);
@@ -179,7 +186,7 @@ export function WalletDashboard({
       if (balanceData.balance === 0 && balanceData.nonce === 0) {
         toast({
           title: "RPC Connection Issue",
-          description: "Unable to connect to new RPC provider. Data may be unavailable.",
+          description: "Unable to connect to new RPC provider. All balances reset to 0.",
           variant: "destructive",
         });
       } else {
@@ -196,10 +203,12 @@ export function WalletDashboard({
       setTransactions([]);
       toast({
         title: "Refresh Failed",
-        description: "Failed to refresh data with new RPC provider",
+        description: "Failed to refresh data with new RPC provider. All balances reset to 0.",
         variant: "destructive",
       });
     } finally {
+      setIsLoadingBalance(false);
+      setIsLoadingTransactions(false);
       setIsRefreshingData(false);
     }
   };

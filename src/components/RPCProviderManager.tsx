@@ -188,7 +188,7 @@ export function RPCProviderManager({ onClose, onRPCChange }: RPCProviderManagerP
     
     toast({
       title: "Primary Provider Set",
-      description: "RPC provider has been set as primary",
+      description: "RPC provider changed. Wallet data will be refreshed.",
     });
     
     // Trigger reload of wallet data with new RPC

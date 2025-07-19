@@ -28,17 +28,41 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
   const [showDecryptDialog, setShowDecryptDialog] = useState(false);
   const { toast } = useToast();
 
+  // Reset all balances when wallet changes (including RPC switch)
+  useEffect(() => {
+    if (wallet) {
+      // Reset all balance states immediately when wallet changes
+      setEncryptedBalance(null);
+      setPendingTransfers([]);
+    }
+  }, [wallet?.address]);
+
   const fetchWalletBalance = async () => {
     if (!wallet) return;
     
     setRefreshing(true);
     try {
+      // Reset all balances first to clear cache
+      setEncryptedBalance(null);
+      setPendingTransfers([]);
+      
       const balanceData = await fetchBalance(wallet.address);
       onBalanceUpdate(balanceData.balance);
       
       // Fetch encrypted balance
       const encData = await fetchEncryptedBalance(wallet.address, wallet.privateKey);
-      setEncryptedBalance(encData);
+      if (encData) {
+        setEncryptedBalance(encData);
+      } else {
+        // If encrypted balance fetch fails, set to zero values
+        setEncryptedBalance({
+          public: 0,
+          public_raw: 0,
+          encrypted: 0,
+          encrypted_raw: 0,
+          total: 0
+        });
+      }
       
       // Fetch pending private transfers
       const pending = await getPendingPrivateTransfers(wallet.address, wallet.privateKey);
@@ -47,8 +71,16 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
       if (balanceData.balance === 0 && balanceData.nonce === 0) {
         toast({
           title: "RPC Connection Issue",
-          description: "Unable to fetch balance from RPC. Balance reset to 0.",
+          description: "Unable to connect to RPC. All balances reset to 0.",
           variant: "destructive",
+        });
+        // Ensure encrypted balance is also reset to 0 on RPC failure
+        setEncryptedBalance({
+          public: 0,
+          public_raw: 0,
+          encrypted: 0,
+          encrypted_raw: 0,
+          total: 0
         });
       } else {
         toast({
@@ -59,21 +91,42 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
     } catch (error) {
       toast({
         title: "Error 500",
-        description: "Failed to refresh balance. Check RPC connection.",
+        description: "Failed to refresh balance. All balances reset to 0.",
         variant: "destructive",
       });
       console.error('Balance fetch error:', error);
       // Reset balance to 0 on error
       onBalanceUpdate(0);
+      // Reset encrypted balance to 0 on error
+      setEncryptedBalance({
+        public: 0,
+        public_raw: 0,
+        encrypted: 0,
+        encrypted_raw: 0,
+        total: 0
+      });
+      setPendingTransfers([]);
     } finally {
       setRefreshing(false);
     }
   };
 
-  // Initial fetch of encrypted balance
+  // Initial fetch of encrypted balance and pending transfers
   useEffect(() => {
     if (wallet) {
-      fetchEncryptedBalance(wallet.address, wallet.privateKey).then(setEncryptedBalance);
+      fetchEncryptedBalance(wallet.address, wallet.privateKey).then(encData => {
+        if (encData) {
+          setEncryptedBalance(encData);
+        } else {
+          setEncryptedBalance({
+            public: 0,
+            public_raw: 0,
+            encrypted: 0,
+            encrypted_raw: 0,
+            total: 0
+          });
+        }
+      });
       getPendingPrivateTransfers(wallet.address, wallet.privateKey).then(setPendingTransfers);
     }
   }, [wallet]);
