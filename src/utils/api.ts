@@ -114,7 +114,7 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     });
     
     if (!response.ok) {
-      console.warn('Failed to fetch encrypted balance, RPC may be unavailable:', response.status);
+      console.warn('Failed to fetch encrypted balance, RPC connection failed:', response.status);
       return null;
     }
     
@@ -129,7 +129,7 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     };
   } catch (error) {
     console.error('Error fetching encrypted balance:', error);
-    console.warn('RPC connection failed for encrypted balance, returning null');
+    console.warn('RPC connection failed for encrypted balance');
     return null;
   }
 }
@@ -138,7 +138,7 @@ export async function encryptBalance(address: string, amount: number, privateKey
   try {
     const encData = await fetchEncryptedBalance(address, privateKey);
     if (!encData) {
-      return { success: false, error: "Cannot get balance" };
+      return { success: false, error: "Cannot get balance - RPC connection failed" };
     }
     
     const currentEncryptedRaw = encData.encrypted_raw;
@@ -177,7 +177,7 @@ export async function decryptBalance(address: string, amount: number, privateKey
   try {
     const encData = await fetchEncryptedBalance(address, privateKey);
     if (!encData) {
-      return { success: false, error: "Cannot get balance" };
+      return { success: false, error: "Cannot get balance - RPC connection failed" };
     }
     
     const currentEncryptedRaw = encData.encrypted_raw;
@@ -247,7 +247,7 @@ export async function createPrivateTransfer(fromAddress: string, toAddress: stri
   try {
     const addressInfo = await getAddressInfo(toAddress);
     if (!addressInfo || !addressInfo.has_public_key) {
-      return { success: false, error: "Recipient has no public key" };
+      return { success: false, error: addressInfo ? "Recipient has no public key" : "Cannot verify recipient - RPC connection failed" };
     }
     
     const toPublicKey = await getPublicKey(toAddress);
@@ -283,7 +283,7 @@ export async function createPrivateTransfer(fromAddress: string, toAddress: stri
       return { success: false, error };
     }
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    return { success: false, error: error instanceof Error ? error.message : 'RPC connection failed' };
   }
 }
 
@@ -333,7 +333,7 @@ export async function claimPrivateTransfer(recipientAddress: string, privateKey:
       return { success: false, error };
     }
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    return { success: false, error: error instanceof Error ? error.message : 'RPC connection failed' };
   }
 }
 

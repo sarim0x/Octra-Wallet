@@ -32,6 +32,7 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
   useEffect(() => {
     if (wallet) {
       // Reset all balance states immediately when wallet changes
+      onBalanceUpdate(0);
       setEncryptedBalance(null);
       setPendingTransfers([]);
     }
@@ -43,6 +44,7 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
     setRefreshing(true);
     try {
       // Reset all balances first to clear cache
+      onBalanceUpdate(0);
       setEncryptedBalance(null);
       setPendingTransfers([]);
       
@@ -126,8 +128,20 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
             total: 0
           });
         }
+      }).catch(error => {
+        console.error('Error fetching encrypted balance:', error);
+        setEncryptedBalance({
+          public: 0,
+          public_raw: 0,
+          encrypted: 0,
+          encrypted_raw: 0,
+          total: 0
+        });
       });
-      getPendingPrivateTransfers(wallet.address, wallet.privateKey).then(setPendingTransfers);
+      getPendingPrivateTransfers(wallet.address, wallet.privateKey).then(setPendingTransfers).catch(error => {
+        console.error('Error fetching pending transfers:', error);
+        setPendingTransfers([]);
+      });
     }
   }, [wallet]);
 

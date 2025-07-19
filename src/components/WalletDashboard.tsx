@@ -330,11 +330,18 @@ export function WalletDashboard({
   const handleBalanceUpdate = async (newBalance: number) => {
     setBalance(newBalance);
     // Also refresh nonce when balance is updated
-    try {
-      const balanceData = await fetchBalance(wallet.address);
-      setNonce(balanceData.nonce);
-    } catch (error) {
-      console.error('Failed to refresh nonce:', error);
+    if (newBalance > 0) {
+      try {
+        const balanceData = await fetchBalance(wallet.address);
+        setNonce(balanceData.nonce);
+      } catch (error) {
+        console.error('Failed to refresh nonce:', error);
+        // Reset nonce to 0 on error
+        setNonce(0);
+      }
+    } else {
+      // If balance is 0 (likely due to RPC failure), reset nonce as well
+      setNonce(0);
     }
   };
 
@@ -348,10 +355,6 @@ export function WalletDashboard({
 
   const handleTransactionSuccess = async () => {
     // Refresh transaction history and balance after successful transaction
-    const refreshData = async () => {
-      try {
-        // Refresh balance and nonce
-        const balanceData = await fetchBalance(wallet.address);
         setBalance(balanceData.balance);
         setNonce(balanceData.nonce);
 
@@ -367,6 +370,10 @@ export function WalletDashboard({
         }
       } catch (error) {
         console.error('Failed to refresh data after transaction:', error);
+        // Reset data on error
+        setBalance(0);
+        setNonce(0);
+        setTransactions([]);
       }
     };
 
