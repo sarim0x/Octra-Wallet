@@ -52,11 +52,22 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
       onBalanceUpdate(balanceData.balance);
       
       // Fetch encrypted balance
-      const encData = await fetchEncryptedBalance(wallet.address, wallet.privateKey);
-      if (encData) {
-        setEncryptedBalance(encData);
-      } else {
-        // If encrypted balance fetch fails, set to zero values
+      try {
+        const encData = await fetchEncryptedBalance(wallet.address, wallet.privateKey);
+        if (encData) {
+          setEncryptedBalance(encData);
+        } else {
+          // If encrypted balance fetch fails, set to zero values
+          setEncryptedBalance({
+            public: 0,
+            public_raw: 0,
+            encrypted: 0,
+            encrypted_raw: 0,
+            total: 0
+          });
+        }
+      } catch (encError) {
+        console.error('Error fetching encrypted balance:', encError);
         setEncryptedBalance({
           public: 0,
           public_raw: 0,
@@ -67,22 +78,19 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
       }
       
       // Fetch pending private transfers
-      const pending = await getPendingPrivateTransfers(wallet.address, wallet.privateKey);
-      setPendingTransfers(pending);
+      try {
+        const pending = await getPendingPrivateTransfers(wallet.address, wallet.privateKey);
+        setPendingTransfers(pending);
+      } catch (pendingError) {
+        console.error('Error fetching pending transfers:', pendingError);
+        setPendingTransfers([]);
+      }
       
       if (balanceData.balance === 0 && balanceData.nonce === 0) {
         toast({
           title: "RPC Connection Issue",
           description: "Unable to connect to RPC. All balances reset to 0.",
           variant: "destructive",
-        });
-        // Ensure encrypted balance is also reset to 0 on RPC failure
-        setEncryptedBalance({
-          public: 0,
-          public_raw: 0,
-          encrypted: 0,
-          encrypted_raw: 0,
-          total: 0
         });
       } else {
         toast({
@@ -116,10 +124,22 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
   // Initial fetch of encrypted balance and pending transfers
   useEffect(() => {
     if (wallet) {
-      fetchEncryptedBalance(wallet.address, wallet.privateKey).then(encData => {
-        if (encData) {
-          setEncryptedBalance(encData);
-        } else {
+      fetchEncryptedBalance(wallet.address, wallet.privateKey)
+        .then(encData => {
+          if (encData) {
+            setEncryptedBalance(encData);
+          } else {
+            setEncryptedBalance({
+              public: 0,
+              public_raw: 0,
+              encrypted: 0,
+              encrypted_raw: 0,
+              total: 0
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching encrypted balance:', error);
           setEncryptedBalance({
             public: 0,
             public_raw: 0,
@@ -127,21 +147,14 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
             encrypted_raw: 0,
             total: 0
           });
-        }
-      }).catch(error => {
-        console.error('Error fetching encrypted balance:', error);
-        setEncryptedBalance({
-          public: 0,
-          public_raw: 0,
-          encrypted: 0,
-          encrypted_raw: 0,
-          total: 0
         });
-      });
-      getPendingPrivateTransfers(wallet.address, wallet.privateKey).then(setPendingTransfers).catch(error => {
-        console.error('Error fetching pending transfers:', error);
-        setPendingTransfers([]);
-      });
+      
+      getPendingPrivateTransfers(wallet.address, wallet.privateKey)
+        .then(setPendingTransfers)
+        .catch(error => {
+          console.error('Error fetching pending transfers:', error);
+          setPendingTransfers([]);
+        });
     }
   }, [wallet]);
 

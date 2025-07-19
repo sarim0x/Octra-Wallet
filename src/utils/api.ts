@@ -114,7 +114,9 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     });
     
     if (!response.ok) {
-      console.warn('Failed to fetch encrypted balance, RPC connection failed:', response.status);
+      console.error('Failed to fetch encrypted balance, RPC connection failed:', response.status);
+      const errorText = await response.text();
+      console.error('Encrypted balance fetch error details:', errorText);
       return null;
     }
     
@@ -129,7 +131,7 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     };
   } catch (error) {
     console.error('Error fetching encrypted balance:', error);
-    console.warn('RPC connection failed for encrypted balance');
+    console.error('RPC connection failed for encrypted balance, returning null');
     return null;
   }
 }

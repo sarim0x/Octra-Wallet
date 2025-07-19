@@ -186,7 +186,7 @@ export function WalletDashboard({
       if (balanceData.balance === 0 && balanceData.nonce === 0) {
         toast({
           title: "RPC Connection Issue",
-          description: "Unable to connect to new RPC provider. All balances reset to 0.",
+          description: "Unable to connect to new RPC provider. All balances (public, private, total) reset to 0.",
           variant: "destructive",
         });
       } else {
@@ -203,7 +203,7 @@ export function WalletDashboard({
       setTransactions([]);
       toast({
         title: "Refresh Failed",
-        description: "Failed to refresh data with new RPC provider. All balances reset to 0.",
+        description: "Failed to refresh data with new RPC provider. All balances (public, private, total) reset to 0.",
         variant: "destructive",
       });
     } finally {
