@@ -355,6 +355,10 @@ export function WalletDashboard({
 
   const handleTransactionSuccess = async () => {
     // Refresh transaction history and balance after successful transaction
+    const refreshData = async () => {
+      try {
+        // Refresh balance and nonce
+        const balanceData = await fetchBalance(wallet.address);
         setBalance(balanceData.balance);
         setNonce(balanceData.nonce);
 
@@ -860,7 +864,6 @@ export function WalletDashboard({
               onTransactionSuccess={handleTransactionSuccess}
             />
           </TabsContent>
-
 
           <TabsContent value="history">
             <TxHistory 
