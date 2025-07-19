@@ -62,7 +62,8 @@ export async function fetchBalance(address: string): Promise<BalanceResponse> {
     if (!balanceResponse.ok) {
       const errorText = await balanceResponse.text();
       console.error('Failed to fetch balance:', balanceResponse.status, errorText);
-      throw new Error(`Error ${balanceResponse.status}`);
+      console.warn('RPC fetch failed, resetting balance to 0');
+      return { balance: 0, nonce: 0 };
     }
     
     const data: any = await balanceResponse.json();
@@ -99,7 +100,8 @@ export async function fetchBalance(address: string): Promise<BalanceResponse> {
     return { balance, nonce };
   } catch (error) {
     console.error('Error fetching balance:', error);
-    throw error;
+    console.warn('RPC connection failed, resetting balance to 0');
+    return { balance: 0, nonce: 0 };
   }
 }
 
@@ -112,6 +114,7 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     });
     
     if (!response.ok) {
+      console.warn('Failed to fetch encrypted balance, RPC may be unavailable');
       return null;
     }
     
@@ -126,6 +129,7 @@ export async function fetchEncryptedBalance(address: string, privateKey: string)
     };
   } catch (error) {
     console.error('Error fetching encrypted balance:', error);
+    console.warn('RPC connection failed for encrypted balance');
     return null;
   }
 }
@@ -445,7 +449,8 @@ export async function fetchPendingTransactions(address: string): Promise<Pending
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Failed to fetch pending transactions:', response.status, errorText);
-      throw new Error(`Error ${response.status}`);
+      console.warn('RPC fetch failed for pending transactions, returning empty array');
+      return [];
     }
     
     const responseText = await response.text();
@@ -472,6 +477,7 @@ export async function fetchPendingTransactions(address: string): Promise<Pending
     return userTransactions;
   } catch (error) {
     console.error('Error fetching pending transactions:', error);
+    console.warn('RPC connection failed for pending transactions');
     return [];
   }
 }
@@ -537,7 +543,11 @@ export async function fetchTransactionHistory(address: string): Promise<AddressH
     if (!confirmedResponse.ok) {
       const errorText = await confirmedResponse.text();
       console.error('Failed to fetch transaction history:', confirmedResponse.status, errorText);
-      throw new Error(`Error ${confirmedResponse.status}`);
+      console.warn('RPC fetch failed for transaction history, returning empty history');
+      return {
+        transactions: [],
+        balance: 0
+      };
     }
     
     const responseText = await confirmedResponse.text();
@@ -547,7 +557,11 @@ export async function fetchTransactionHistory(address: string): Promise<AddressH
       apiData = JSON.parse(responseText);
     } catch (parseError) {
       console.error('Failed to parse transaction history JSON:', parseError);
-      throw new Error('Invalid JSON response from server');
+      console.warn('Invalid JSON response, returning empty history');
+      return {
+        transactions: [],
+        balance: 0
+      };
     }
     
     // Fetch details for each confirmed transaction
@@ -605,7 +619,11 @@ export async function fetchTransactionHistory(address: string): Promise<AddressH
     return result;
   } catch (error) {
     console.error('Error fetching transaction history:', error);
-    throw error;
+    console.warn('RPC connection failed for transaction history, returning empty history');
+    return {
+      transactions: [],
+      balance: 0
+    };
   }
 }
 

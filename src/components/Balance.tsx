@@ -44,10 +44,18 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
       const pending = await getPendingPrivateTransfers(wallet.address, wallet.privateKey);
       setPendingTransfers(pending);
       
-      toast({
-        title: "Balance Updated",
-        description: "Balance has been refreshed successfully",
-      });
+      if (balanceData.balance === 0 && balanceData.nonce === 0) {
+        toast({
+          title: "RPC Connection Issue",
+          description: "Unable to fetch balance from RPC. Balance reset to 0.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Balance Updated",
+          description: "Balance has been refreshed successfully",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error 500",
@@ -55,6 +63,8 @@ export function Balance({ wallet, balance, onBalanceUpdate, isLoading = false }:
         variant: "destructive",
       });
       console.error('Balance fetch error:', error);
+      // Reset balance to 0 on error
+      onBalanceUpdate(0);
     } finally {
       setRefreshing(false);
     }

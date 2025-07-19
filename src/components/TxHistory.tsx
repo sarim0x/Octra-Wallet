@@ -60,6 +60,11 @@ export function TxHistory({ wallet, transactions, onTransactionsUpdate, isLoadin
       if (!Array.isArray(historyData)) {
         console.error('Transaction history data is not an array:', historyData);
         onTransactionsUpdate([]);
+        toast({
+          title: "RPC Connection Issue",
+          description: "Unable to fetch transaction history from RPC",
+          variant: "destructive",
+        });
         return;
       }
       
@@ -78,6 +83,8 @@ export function TxHistory({ wallet, transactions, onTransactionsUpdate, isLoadin
       
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      // Reset transactions to empty array on error
+      onTransactionsUpdate([]);
       toast({
         title: "Error",
         description: "Failed to fetch transactions. Check RPC connection.",

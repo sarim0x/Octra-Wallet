@@ -98,8 +98,19 @@ export function WalletDashboard({
         const balanceData = await fetchBalance(wallet.address);
         setBalance(balanceData.balance);
         setNonce(balanceData.nonce);
+        
+        if (balanceData.balance === 0 && balanceData.nonce === 0) {
+          toast({
+            title: "RPC Connection Issue",
+            description: "Unable to connect to RPC. Balance and transaction data may be unavailable.",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch balance:', error);
+        // Reset to 0 on error
+        setBalance(0);
+        setNonce(0);
         toast({
           title: "Error",
           description: "Balance fetch failed",
@@ -120,9 +131,13 @@ export function WalletDashboard({
             type: tx.from?.toLowerCase() === wallet.address.toLowerCase() ? 'sent' : 'received'
           } as Transaction));
           setTransactions(transformedTxs);
+        } else {
+          // If historyData is not an array, set empty transactions
+          setTransactions([]);
         }
       } catch (error) {
         console.error('Failed to fetch transaction history:', error);
+        setTransactions([]);
         toast({
           title: "Error",
           description: "History fetch failed",
@@ -157,14 +172,28 @@ export function WalletDashboard({
           type: tx.from?.toLowerCase() === wallet.address.toLowerCase() ? 'sent' : 'received'
         } as Transaction));
         setTransactions(transformedTxs);
+      } else {
+        setTransactions([]);
       }
       
-      toast({
-        title: "Data Refreshed",
-        description: "Wallet data has been updated with new RPC provider",
-      });
+      if (balanceData.balance === 0 && balanceData.nonce === 0) {
+        toast({
+          title: "RPC Connection Issue",
+          description: "Unable to connect to new RPC provider. Data may be unavailable.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Data Refreshed",
+          description: "Wallet data has been updated with new RPC provider",
+        });
+      }
     } catch (error) {
       console.error('Failed to refresh wallet data:', error);
+      // Reset data on error
+      setBalance(0);
+      setNonce(0);
+      setTransactions([]);
       toast({
         title: "Refresh Failed",
         description: "Failed to refresh data with new RPC provider",
